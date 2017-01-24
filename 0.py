@@ -147,6 +147,21 @@
 # functions
 #
 
+def hextobin(hexval):
+    thelen = len(hexval) *4
+    binval = bin(int(hexval, 16))[2:]
+    while (len(binval) < thelen):
+        binval = '0' + binval
+    return binval # return string
+
+def bintohex(binval):
+    hexval = hex(int(binval, 2))[2:]
+    return hexval # return string
+
+def dectohex(decval):
+    # hex()가 string을 리턴하나?
+    return hex(decval)[2:]
+
 # 
 # def pass1():
 # 
@@ -184,25 +199,23 @@ symtab = {}
 #
 
 fsource = open("source.txt", 'r')
-listOfLine0 = []
 listOfLine = []
 # read source file
 while True:
     line = fsource.readline()
     if not line: break
-    list0.append(line)
-
-for line in list0:
-    line = line.upper()
+    listOfLine.append(line)
 
 fsource.close()
-# tab으로 나눔
-for line in listOfLine0:
-    line = line.replace("\n", "")
-    temp = line.split("\t")
-    listOfLine.append(temp)
 
-del listOfLine0
+for i in range(len(listOfLine)):
+    listOfLine[i] = listOfLine[i].upper()
+
+# tab으로 나눔
+for i in range(len(listOfLine)):
+    listOfLine[i] = listOfLine[i].replace("\n", "")
+    listOfLine[i] = (listOfLine[i].split("\t")) + [""]
+    # listOfLine[i] = (listOfLine[i].split("\t"))
 
 # pass1
 
@@ -251,44 +264,45 @@ if listOfLine[0][1] == "START":
 else:
     starting_address = 0
     locctr = starting_address
-for line in listOfLine[1:]:
+for i in range(1, len(listOfLine)):
     # _label = line[0]
     # _opcode = line[1]
     # _operand = line[2]
     # _loc = line[3]
-    # is comment line
-    if line[0].startswith("."):
+    # 망할 이렇게 못씀 다 수정해야함
+    if listOfLine[i][0].startswith("."):
+        # then this is a comment line
         pass
     # if this is not a comment line
     else:
-        if not line[0] == "":
-            if symtab[line[0]]:
+        if not listOfLine[i][0] == "":
+            if not listOfLine[i][0] in symtab:
                 error_duplicate_symbol = True
             else:
-                symtab[line[0]] = locctr
+                symtab[listOfLine[i][0]] = locctr
                 
-        if optab[line[1]]:
-            line[3] = locctr
+        if listOfLine[i][1] in optab:
+            listOfLine[i][3] = locctr
             locctr = locctr + 3
         
-        elif line[1] == "WORD":
-            line[3] = locctr
+        elif listOfLine[i][1] == "WORD":
+            listOfLine[i][3] = locctr
             locctr = locctr + 3
         
-        elif line[1] == "RESW": 
-            line[3] = locctr
-            locctr = locctr + 3 * int(line[2])
+        elif listOfLine[i][1] == "RESW": 
+            listOfLine[i][3] = locctr
+            locctr = locctr + 3 * int(listOfLine[i][2])
        
-        elif line[1] == "RESB": 
-            line[3] = locctr
-            locctr = locctr + int(line[2] )
+        elif listOfLine[i][1] == "RESB": 
+            listOfLine[i][3] = locctr
+            locctr = locctr + int(listOfLine[i][2])
       
-        elif line[1] == "BYTE": 
-            line[3] = locctr
-            if line[2].startswith("C"):
-                locctr = locctr + len(line[2])
-            elif line[2].startswith("X"):
-                locctr = locctr + int(line[2][1:-1], 16)    #hex string  to int
+        elif listOfLine[i][1] == "BYTE": 
+            listOfLine[i][3] = locctr
+            if listOfLine[i][2].startswith("C"):
+                locctr = locctr + len(listOfLine[i][2])
+            elif listOfLine[i][2].startswith("X"):
+                locctr = locctr + int(listOfLine[i][2][1:-1], 16)    #hex string  to int
        
         else: error_invalid_operation_code = True
         
@@ -334,7 +348,8 @@ program_length = locctr - starting_address
 header_record = ""
 if listOfLine[0][1] == "START":
     #이거 program 이름 부분 도 처리..해줘..
-    header_record = "H" + listOfLine[0][1].ljust(6) + hex(starting_address).zfill(6) + hex(program_length).zfill(6)
+    header_record = "H" + listOfLine[0][1].ljust(6) + dectohex(starting_address).zfill(6) + dectohex(program_length).zfill(6)
+    header_record = header_record.upper()
     # H + program name + starting address of object program (hexadecimal) + program length in bytes (hexadecimal)
     # 1 +      6       +                        6                         +                    6               
 else:
@@ -346,46 +361,80 @@ error_opcode = False
 # 이 리스트는 immediate file 의 라인 하나마다의 object code 들을 원소로 가짐니다
 text_record_list = []
 
-for line in listOfLine[1:]:
-    # 라인 하나당 이 변수에 텍스트를 써넣을거임
-    # 그리고 그 텍스트를 object code에 써넣을거임
+# for line in listOfLine[1:]:
+#     # 라인 하나당 이 변수에 텍스트를 써넣을거임
+#     # 그리고 그 텍스트를 object code에 써넣을거임
+#     temp_object_code = ""
+#     temp_object_code_list = []
+
+#     if not line[0].startswith("."):
+#         # then this is a comment line
+#         if optab[line[1]]:
+#             #if line[1] in optab:
+#             #if key in dic:
+#             temp_object_code_list[0] = optab[line[1]]
+#             if line[2]:
+#                 if symtab[line[2]]:
+#                     temp_object_code_list.append(symtab[line[2]])
+#                 else:
+#                     temp_object_code_list[1] = "0"
+#             else:
+#                 temp_object_code_list[1] = "0"
+#             temp_object_code += temp_object_code_list[0]
+#             temp_object_code += hex(int( ( "0" + bin(int(temp_object_code_list[1], 16)).zfill(15) ), 2)) #bin to hex 함수를 만들어서  쓰렴,,
+#             # 중간에 "0" indicates indexed-addressing mode
+#             text_record_list.append((temp_object_code, list[3])
+#             ####################################### this fucking elif code block has INVALID SYNTAX error #########################
+#             #####################################################################################################################
+#         elif line[1] != "END":
+#             error_opcode = True
+#         elif line[1] == "BYTE" or line[1] == "WORD":
+#             # convert constant to object code:
+#             if line[2].startswith("C"):
+#                 temp_object_code = map(ord, line[2][1:-1])
+#             elif line[2].startswith("X"):
+#                 temp_object_code = line[2][1:-1]
+#             else:
+#                 # 오류 처리는..?
+#                 # 다음에 해
+#                 # 너무하네
+#                 temp_object_code = line[2].zfill(6)
+#             text_record_list.append((temp_object_code, line[3]))
+#         else:
+#             break
+
+for i in range(1, len(listOfLine)):
     temp_object_code = ""
     temp_object_code_list = []
 
-    if not line[0].startswith("."):
-        # then this is a comment line
-        if optab[line[1]]:
-            #if line[1] in optab:
-            #if key in dic:
-            temp_object_code_list[0] = optab[line[1]]
-            if line[2]:
-                if symtab[line[2]]:
-                    temp_object_code_list.append(symtab[line[2]])
+    if not listOfLine[i][0].startswith("."):
+        if listOfLine[i][1] in optab:
+            temp_object_code_list += [optab[listOfLine[i][1]]]
+            if listOfLine[i][2]:
+                if listOfLine[i][2] in symtab:
+                    temp_object_code_list.append(symtab[listOfLine[i][2]])
                 else:
-                    temp_object_code_list[1] = "0"
+                    # temp_object_code_list[1] = "0"
+                    temp_object_code_list += ["0"]
             else:
                 temp_object_code_list[1] = "0"
             temp_object_code += temp_object_code_list[0]
-            temp_object_code += hex(int( ( "0" + bin(int(temp_object_code_list[1], 16)).zfill(15) ), 2)) #bin to hex 함수를 만들어서  쓰렴,,
-            # 중간에 "0" indicates indexed-addressing mode
-            text_record_list.append((temp_object_code, list[3])
-            ####################################### this fucking elif code block has INVALID SYNTAX error #########################
-            #####################################################################################################################
-        elif expression:
-            pass
-        elif line[1] != "END":
+            # temp_object_code += hex(int(("0" + bin(int(temp_object_code_list[1], 16)).zfill(15)), 2))
+            # 
+            # 위에 코드는 에러가 나는데 고치기가 너무 싫다!
+            # 역시 hex to bin 함수를 만들어서 써야겠다!
+            # 
+            temp_object_code += bintohex("0" + hextobin(temp_object_code_list[1]).zfill(15))
+            text_record_list.append((temp_object_code, listOfLine[i][3]))
+        elif listOfLine[i][1] != "END":
             error_opcode = True
-        elif line[1] == "BYTE" or line[1] == "WORD":
-            # convert constant to object code:
-            if line[2].startswith("C"):
-                temp_object_code = map(ord, line[2][1:-1])
-            elif line[2].startswith("X"):
-                temp_object_code = line[2][1:-1]
+        elif listOfLine[i][1] == "BYTE" or listOfLine[i][1] == "WORD":
+            if listOfLine[i][2].startswith("C"):
+                temp_object_code = map(ord, listOfLine[i][2][1:-1])
+            elif listOfLine[i][2].startswith("X"):
+                temp_object_code = listOfLine[i][2][1:-1]
             else:
-                # 오류 처리는..?
-                # 다음에 해
-                # 너무하네
-                temp_object_code = line[2].zfill(6)
+                temp_object_code = listOfLine[i][2].zfill(6)
             text_record_list.append((temp_object_code, line[3]))
         else:
             break
@@ -413,7 +462,7 @@ temp_temp = "T"
 for linetuple in text_record_list:
     if i == 0:
         temp_temp = "T"
-        temp_temp += linetuple[1]
+        temp_temp += str(linetuple[1])
     i += len(linetuple[0]) /2
     if i > 60:
         fobject.write(temp_temp + "\n")
