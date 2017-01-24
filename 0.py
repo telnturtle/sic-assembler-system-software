@@ -131,17 +131,13 @@
 
 
 
-# 튜플로 하지 뭐..
-# 다 튜플로 해! 꺄르륵! 
-# 입력은 리스트 오브 3-튜플로 하자
-# 출력은 리스트 of 리스트(length:3)으로 하자
 # 결국 죄다 리스트로 하게되었다
+# ㄴ 아님. 튜플 쓴곳도 있다
 # [label, opcode, operand, loc]
-# 아 이거 맘에안드네
-# .loc 이렇게 접근하고싶은데 어떻게하지
-# 여기도 구조체가 있나?
-# 나중에 대소문자 문제 처리해야!
-# 파일에서 입력 받을 때 다 upper case 해버리자
+# .loc 이렇게 접근하고싶은데 어떻게하지 ㄴ 귀찮아서 안만들었다
+# 여기도 구조체가 있나? ㄴ 모르겠다
+# 나중에 대소문자 문제 처리해야! ㄴ 했다
+# 파일에서 입력 받을 때 다 upper case 해버리자. ㄴ 했다
 
 #
 # functions
@@ -159,23 +155,15 @@ def bintohex(binval):
     return hexval # return string
 
 def dectohex(decval):
-    # hex()가 string을 리턴하나?
+    # hex()가 string을 리턴하나? 그렇다.
     return hex(decval)[2:]
 
-# 
-# def pass1():
-# 
+def take(num, lyst):
+    rlist = []
+    for i in range(0,num):
+        rlist.append(lyst[i])
+    return rlist
 
-# def pass2():
-#     # for every line 
-#         # 라벨 처리
-#         # opcode 처리
-#         # operand 처리
-
-# 
-# 함수들은 안쓰는구나?
-# 응
-# 
 
 #
 # optab
@@ -190,7 +178,8 @@ optab = {"ADD": "18", "AND": "40", "COMP": "28", "DIV":"24", "J": "3C", "JEQ":"3
 #
 
 symtab = {}
-# key:value = symbol name : address
+# key:value = symbol_name:address
+# symbol = variable
 
 
 
@@ -213,9 +202,10 @@ for i in range(len(listOfLine)):
 
 # tab으로 나눔
 for i in range(len(listOfLine)):
-    listOfLine[i] = listOfLine[i].replace("\n", "")
-    listOfLine[i] = (listOfLine[i].split("\t")) + [""]
-    # listOfLine[i] = (listOfLine[i].split("\t"))
+    _temp = listOfLine[i].replace("\n", "")
+    listOfLine[i] = ["", "", "", ""]
+    listOfLine[i] = (_temp.split("\t")) + ["", "", "", "", ""]
+    listOfLine[i] = take(4, listOfLine[i])
 
 # pass1
 
@@ -258,6 +248,8 @@ error_duplicate_symbol = False
 error_invalid_operation_code = False
 starting_address = 0
 program_length = 0
+flag_address_of_first_excutable_instruction_is_not_writed_yet = True
+address_of_first_excutable_instruction = 0
 if listOfLine[0][1] == "START":
     starting_address = int(listOfLine[0][2])
     locctr = starting_address
@@ -269,7 +261,7 @@ for i in range(1, len(listOfLine)):
     # _opcode = line[1]
     # _operand = line[2]
     # _loc = line[3]
-    # 망할 이렇게 못씀 다 수정해야함
+    # 망할 이렇게 못씀 다 수정해야함 (line -> listOfLine[i])
     if listOfLine[i][0].startswith("."):
         # then this is a comment line
         pass
@@ -282,6 +274,9 @@ for i in range(1, len(listOfLine)):
                 symtab[listOfLine[i][0]] = locctr
                 
         if listOfLine[i][1] in optab:
+            if flag_address_of_first_excutable_instruction_is_not_writed_yet:
+                # End record에 쓰인다
+                address_of_first_excutable_instruction = locctr
             listOfLine[i][3] = locctr
             locctr = locctr + 3
         
@@ -302,7 +297,7 @@ for i in range(1, len(listOfLine)):
             if listOfLine[i][2].startswith("C"):
                 locctr = locctr + len(listOfLine[i][2])
             elif listOfLine[i][2].startswith("X"):
-                locctr = locctr + int(listOfLine[i][2][1:-1], 16)    #hex string  to int
+                locctr = locctr + int(listOfLine[i][2][2:-1], 16)    #hex string  to int
        
         else: error_invalid_operation_code = True
         
@@ -384,8 +379,11 @@ text_record_list = []
 #             temp_object_code += hex(int( ( "0" + bin(int(temp_object_code_list[1], 16)).zfill(15) ), 2)) #bin to hex 함수를 만들어서  쓰렴,,
 #             # 중간에 "0" indicates indexed-addressing mode
 #             text_record_list.append((temp_object_code, list[3])
-#             ####################################### this fucking elif code block has INVALID SYNTAX error #########################
-#             #####################################################################################################################
+# 그리고 왠진 모르겠는데 이 아랫줄의 elif에 린터가 빨간줄을 그어줬었다. 프로그램 돌려봐도 에러가 났다. invalid syntax 라고.
+# 아직도 이유는 모르겠다.
+# 구글링해보니 indentation을 잘못했을거라는데 여전히 모르겠다.
+# # 코드를 눈으로 보고 배껴쓰니 잘 돌아간다. 정말 슬프다.
+# 그 배낀 코드는 이 주석 블럭 밑에있는거다. 슬프기 때문에 이 주석을 지우지 않고 남겨놓겠다
 #         elif line[1] != "END":
 #             error_opcode = True
 #         elif line[1] == "BYTE" or line[1] == "WORD":
@@ -456,32 +454,23 @@ for i in range(1, len(listOfLine)):
 fobject = open("object.txt", 'w')
 fobject.write(header_record)
 fobject.write("\n")
-i = 0
+thei = 0
 temp_temp = "T"
 # Tuple, ("object code", "loc")
 for linetuple in text_record_list:
-    if i == 0:
-        temp_temp = "T"
-        temp_temp += str(linetuple[1])
-    i += len(linetuple[0]) /2
     if i > 60:
         fobject.write(temp_temp + "\n")
         temp_temp = "T"
-        i = 0
-        break
-    else:
-        temp_temp += linetuple[0]
-    
+        thei = 0
+    if thei == 0:
+        temp_temp = "T"
+        temp_temp += str(linetuple[1])
+    thei += len(linetuple[0]) /2    
+    temp_temp += linetuple[0]
+fobject.write(temp_temp + "\n")
+end_record = "E" + dectohex(address_of_first_excutable_instruction).zfill(6)
+fobject.write(end_record)
 
-
-    # temp_temp.append(linetuple.)
-
-
-
-    # if object code will not fit into the current Text record them
-#             thie Text record to object program
-#             initialize new Text record
-#         add object code to Text record
-
+# 코드가 Pythonic 하지 않지만 아무렴 어떠냐
 
 fobject.close
