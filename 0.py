@@ -527,3 +527,5 @@ fobject.close
 # 은 int(param, base)의 parameter를 str으로 주자
 
 # 파일에 쓰는거 .upper() 했음
+
+# 어째서 마지막의 상수 byte x'05'가 object code에 안나타나는지 생각해보자
