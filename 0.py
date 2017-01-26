@@ -144,19 +144,26 @@
 #
 
 def hextobin(hexval):
-    thelen = len(hexval) *4
-    binval = bin(int(hexval, 16))[2:]
+    thelen = len(str(hexval)) *4
+    binval = bin(int(str(hexval), 16))[2:]
     while (len(binval) < thelen):
         binval = '0' + binval
     return binval # return string
 
 def bintohex(binval):
+    thelen = len(binval) / 4
     hexval = hex(int(binval, 2))[2:]
+    while (len(hexval) < thelen):
+        hexval = '0' + hexval
     return hexval # return string
 
 def dectohex(decval):
     # hex()가 string을 리턴하나? 그렇다.
     return hex(decval)[2:]
+
+# def hextodec(hexval):
+#     return int(hexval, 16)
+# 여기서 에러나는것 같아서 덮어둔다
 
 def take(num, lyst):
     rlist = []
@@ -250,12 +257,18 @@ starting_address = 0
 program_length = 0
 flag_address_of_first_excutable_instruction_is_not_writed_yet = True
 address_of_first_excutable_instruction = 0
+
+
+# first line of source
 if listOfLine[0][1] == "START":
-    starting_address = int(listOfLine[0][2])
+    starting_address = int(listOfLine[0][2], 16)
     locctr = starting_address
 else:
     starting_address = 0
     locctr = starting_address
+
+
+# 소스의 나머지 라인들
 for i in range(1, len(listOfLine)):
     # _label = line[0]
     # _opcode = line[1]
@@ -268,7 +281,7 @@ for i in range(1, len(listOfLine)):
     # if this is not a comment line
     else:
         if not listOfLine[i][0] == "":
-            if not listOfLine[i][0] in symtab:
+            if listOfLine[i][0] in symtab:
                 error_duplicate_symbol = True
             else:
                 symtab[listOfLine[i][0]] = locctr
@@ -302,6 +315,19 @@ for i in range(1, len(listOfLine)):
         else: error_invalid_operation_code = True
         
 program_length = locctr - starting_address
+
+
+
+
+#####################################debug######################################3
+
+
+# print("after pass 1")
+# print("symtab:")
+# for value in symtab:
+#     print(value)
+
+
 
 
 
@@ -343,7 +369,7 @@ program_length = locctr - starting_address
 header_record = ""
 if listOfLine[0][1] == "START":
     #이거 program 이름 부분 도 처리..해줘..
-    header_record = "H" + listOfLine[0][1].ljust(6) + dectohex(starting_address).zfill(6) + dectohex(program_length).zfill(6)
+    header_record = "H" + listOfLine[0][0].ljust(6) + dectohex(starting_address).zfill(6) + dectohex(program_length).zfill(6)
     header_record = header_record.upper()
     # H + program name + starting address of object program (hexadecimal) + program length in bytes (hexadecimal)
     # 1 +      6       +                        6                         +                    6               
@@ -403,26 +429,34 @@ text_record_list = []
 
 for i in range(1, len(listOfLine)):
     temp_object_code = ""
-    temp_object_code_list = []
+    temp_object_code_list = ["", "", ""]
+    # 오버해서 만들어 놨음
 
     if not listOfLine[i][0].startswith("."):
         if listOfLine[i][1] in optab:
-            temp_object_code_list += [optab[listOfLine[i][1]]]
+            temp_object_code_list[0] = optab[listOfLine[i][1]]
             if listOfLine[i][2]:
                 if listOfLine[i][2] in symtab:
-                    temp_object_code_list.append(symtab[listOfLine[i][2]])
+                    # debug###########################################################
+                    # print("symtab[listOfLine[i][2]] = " + str(symtab[listOfLine[i][2]]))
+                    temp_object_code_list[1] = symtab[listOfLine[i][2]]
                 else:
                     # temp_object_code_list[1] = "0"
-                    temp_object_code_list += ["0"]
+                    temp_object_code_list[1] = "0"
             else:
                 temp_object_code_list[1] = "0"
-            temp_object_code += temp_object_code_list[0]
+            # debug###############################################
+            print("temp_object_code_list[0] = " + temp_object_code_list[0])
+            # print("temp_object_code_list[next] = " + bintohex("0" + hextobin(temp_object_code_list[1]).zfill(15)))
+            # print("temp_object_code_list[next] = " + hextobin(temp_object_code_list[1]).zfill(15))
+            print("temp_object_code_list[next] = " + str(temp_object_code_list[1]))
+
+            temp_object_code = temp_object_code_list[0] + bintohex("0" + hextobin(temp_object_code_list[1]).zfill(15))
             # temp_object_code += hex(int(("0" + bin(int(temp_object_code_list[1], 16)).zfill(15)), 2))
             # 
             # 위에 코드는 에러가 나는데 고치기가 너무 싫다!
             # 역시 hex to bin 함수를 만들어서 써야겠다!
             # 
-            temp_object_code += bintohex("0" + hextobin(temp_object_code_list[1]).zfill(15))
             text_record_list.append((temp_object_code, listOfLine[i][3]))
         elif listOfLine[i][1] != "END":
             error_opcode = True
@@ -438,14 +472,23 @@ for i in range(1, len(listOfLine)):
             break
 
 
+print("text_record_list")
+print("")
+
+for l in text_record_list:
+    print(l)
+
+print("")
+
+
 
 # Text record
 # T + starting address for object code in this record (hexadecimal) + 
 # length of object code in this record in bytes (hexadecimal) + 
 # object code, represented in hexadecimal (2 columns per byte of object code)
-# 1 + 6 + 
-# 2 + 
-# 60 (column 10-69)
+# 1 +                                6                              + 
+#                               2                             + 
+#                                 60 (column 10-69)
 
 # End record
 # E + address of first excutable instruction in object program (hexadecimal)
@@ -458,14 +501,15 @@ thei = 0
 temp_temp = "T"
 # Tuple, ("object code", "loc")
 for linetuple in text_record_list:
-    if i > 60:
-        fobject.write(temp_temp + "\n")
+    print ("thei = " + str(thei))
+    if thei > 60:
+        fobject.write(temp_temp.upper() + "\n")
         temp_temp = "T"
         thei = 0
     if thei == 0:
         temp_temp = "T"
-        temp_temp += str(linetuple[1])
-    thei += len(linetuple[0]) /2    
+        temp_temp += str(dectohex(linetuple[1])).zfill(6)
+    thei += len(linetuple[0])
     temp_temp += linetuple[0]
 fobject.write(temp_temp + "\n")
 end_record = "E" + dectohex(address_of_first_excutable_instruction).zfill(6)
@@ -474,3 +518,12 @@ fobject.write(end_record)
 # 코드가 Pythonic 하지 않지만 아무렴 어떠냐
 
 fobject.close
+
+
+###################################
+# T레코드의 첫번째 startingaddress가 1000말고 4096으로 찍히는 문제를 해결하자
+
+# int() can't convert non-string with explicit base
+# 은 int(param, base)의 parameter를 str으로 주자
+
+# 파일에 쓰는거 .upper() 했음
