@@ -133,6 +133,7 @@
 
 # 결국 죄다 리스트로 하게되었다
 # ㄴ 아님. 튜플 쓴곳도 있다
+# ㄴㄴ 근데 이건 대충 때우느라 그런거고
 # [label, opcode, operand, loc]
 # .loc 이렇게 접근하고싶은데 어떻게하지 ㄴ 귀찮아서 안만들었다
 # 여기도 구조체가 있나? ㄴ 모르겠다
@@ -308,7 +309,7 @@ for i in range(1, len(listOfLine)):
         elif listOfLine[i][1] == "BYTE": 
             listOfLine[i][3] = locctr
             if listOfLine[i][2].startswith("C"):
-                locctr = locctr + len(listOfLine[i][2])
+                locctr = locctr + len(listOfLine[i][2][2:-1])
             elif listOfLine[i][2].startswith("X"):
                 locctr = locctr + int(listOfLine[i][2][2:-1], 16)    #hex string  to int
        
@@ -462,9 +463,9 @@ for i in range(1, len(listOfLine)):
             error_opcode = True
         elif listOfLine[i][1] == "BYTE" or listOfLine[i][1] == "WORD":
             if listOfLine[i][2].startswith("C"):
-                temp_object_code = map(ord, listOfLine[i][2][1:-1])
+                temp_object_code = map(ord, listOfLine[i][2][2:-1])
             elif listOfLine[i][2].startswith("X"):
-                temp_object_code = listOfLine[i][2][1:-1]
+                temp_object_code = listOfLine[i][2][2:-1]
             else:
                 temp_object_code = listOfLine[i][2].zfill(6)
             text_record_list.append((temp_object_code, line[3]))
